@@ -1,0 +1,14 @@
+[package]
+name = "esp-create-project"
+version = "0.1.0"
+authors = ["alan2 <alan5142@hotmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.11", features = ["blocking"] }
+console = "0.14"
+dialoguer = "0.8"
+zip = "0.5"
+tempfile = "3.2.0"
