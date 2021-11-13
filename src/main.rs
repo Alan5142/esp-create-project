@@ -104,7 +104,10 @@ fn main() -> anyhow::Result<()> {
     // Create a temp file to download the template
     let mut tmp_file = tempfile::tempfile().unwrap();
 
+    // Download the template
+    print!("🌐 Downloading template");
     download_template(&mut tmp_file)?;
+    println!("\r✔ Template downloaded       ");
 
     // Unzip the template
     print!("🗄 Unziping file");
@@ -112,7 +115,7 @@ fn main() -> anyhow::Result<()> {
     let mut zip = zip::ZipArchive::new(tmp_file).unwrap();
     println!("\r✔ File unzipped");
 
-    let prefix = zip.by_index(0).unwrap().enclosed_name().unwrap().to_owned();
+    let prefix = PathBuf::new().join("esp-idf-template-master/");
 
     // Write the zip contents to the directory
     print!("📁 Writing files");
@@ -135,7 +138,10 @@ fn main() -> anyhow::Result<()> {
     println!("\r✔ Files written  ");
 
     if use_git {
+        print!("⚙️Initializing git repo");
+        std::io::stdout().flush().unwrap();
         initialize_git_repo(&directory)?;
+        println!("\r✔ Git repo initialized  ");
     }
 
     println!("😁 Have fun!");
@@ -143,15 +149,12 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn download_template(tmp_file: &mut File) -> anyhow::Result<()> {
-    // Download the template
-    print!("🌐 Downloading template");
     io::stdout().flush().unwrap();
     let mut res = ureq::get(templates::TEMPLATE_FILE)
         .call()
         .context("Cannot download the template")?
         .into_reader();
     io::copy(&mut res, tmp_file).context("Cannot copy the template to temp file")?;
-    println!("\r✔ Template downloaded       ");
     Ok(())
 }
 
@@ -161,12 +164,10 @@ fn download_template(tmp_file: &mut File) -> anyhow::Result<()> {
 /// * `directory` - The directory to initialize the git repository in
 /// * `use_git` - Whether to initialize the git repository
 fn initialize_git_repo(directory: &str) -> anyhow::Result<()> {
-    print!("⚙️Initializing git repo");
     Command::new("git")
         .args(&["init", directory])
         .output()
         .context("Failed to init git repo")?;
-    println!("\r✔ Git repo initialized  ");
     Ok(())
 }
 
@@ -275,7 +276,7 @@ fn replace_main_file(
 /// # Arguments
 /// * `directory` - The directory to extract the template to
 /// * `zip` - The zip archive to extract
-/// * `prefix` -
+/// * `prefix` - The zip directory prefix
 ///
 /// # Returns
 /// `Ok(())` if the extraction was successful, `Err(anyhow::Error)` otherwise
@@ -307,4 +308,47 @@ fn extract_zip(directory: &str, zip: &mut ZipArchive<File>, prefix: &Path) -> an
             .context(format!("Failed to unzip file \"{}\"", file.name()))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_download_and_unzip_file() {
+        let mut tmp_file = tempfile::tempfile().unwrap();
+        let download_res = download_template(&mut tmp_file);
+        assert!(download_res.is_ok());
+
+        let mut zip = ZipArchive::new(tmp_file).unwrap();
+        let extract_res = extract_zip("test", &mut zip, Path::new("esp-idf-template-master/"));
+        assert!(extract_res.is_ok());
+    }
+
+    #[test]
+    fn test_programming_language_conversion() {
+        let c_language = 0;
+        let c_language_enum = ProgrammingLanguage::from(c_language);
+
+        assert_eq!(c_language_enum, ProgrammingLanguage::C);
+
+        let cpp11_language = 1;
+        let cpp11_language_enum = ProgrammingLanguage::from(cpp11_language);
+        assert_eq!(cpp11_language_enum, ProgrammingLanguage::Cpp11);
+
+        let cpp14_language = 2;
+        let cpp14_language_enum = ProgrammingLanguage::from(cpp14_language);
+        assert_eq!(cpp14_language_enum, ProgrammingLanguage::Cpp14);
+
+        let cpp17_language = 3;
+        let cpp17_language_enum = ProgrammingLanguage::from(cpp17_language);
+        assert_eq!(cpp17_language_enum, ProgrammingLanguage::Cpp17);
+    }
+
+    #[test]
+    fn test_programming_language_conversion_unknown() {
+        let unknown_language = 4;
+        let unknown_language_enum = ProgrammingLanguage::from(unknown_language);
+        assert_eq!(unknown_language_enum, ProgrammingLanguage::Unknown);
+    }
 }
