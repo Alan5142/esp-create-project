@@ -1,0 +1,49 @@
+---
+name: "tagged-release linux"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  tagged-release:
+    name: "Tagged Release"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install rustup aarch64
+        uses: actions/setup-rustup@v1
+        with:
+          rustup-target: aarch64-unknown-linux-gnu
+          rustup-toolchain: stable
+      - name: Install rustup x86_64
+        uses: actions/setup-rustup@v1
+        with:
+          rustup-target: x86_64-unknown-linux-gnu
+          rustup-toolchain: stable
+
+      - name: Build aarch64
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --target aarch64-unknown-linux-gnu --release
+      - name: Build x86_64
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target x86_64-unknown-linux-gnu --release
+      - name: Rename files
+        run: |
+          mv target/x86_64-unknown-linux-gnu/release/esp-create-project esp-create-project-linux-x86_64
+          mv target/aarch64-unknown-linux-gnu/release/esp-create-project esp-create-project-linux-aarch64
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            esp-create-project-linux-86_64
+            esp-create-project-linux-aarch64
