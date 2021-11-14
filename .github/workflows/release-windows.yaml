@@ -1,5 +1,5 @@
 ---
-name: "tagged-release"
+name: "tagged-release windows"
 
 on:
   push:
@@ -9,12 +9,7 @@ on:
 jobs:
   tagged-release:
     name: "Tagged Release"
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      matrix:
-        config:
-          - os: ubuntu-latest
-          - os: windows-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -22,9 +17,10 @@ jobs:
       - name: Build release
         run: cargo build --verbose --release
 
+      - name: Rename release build
+        run: mv target/release/esp-create-project.exe esp-create-project-windows-x86_64.exe
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            target/release/esp-create-project
-            target/release/esp-create-project.exe
+          files: esp-create-project-windows-x86_64.exe

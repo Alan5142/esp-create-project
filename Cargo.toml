@@ -17,3 +17,4 @@ anyhow = "1"
 [profile.release]
 opt-level = "z"  # Optimize for size.
 lto = true       # Enable Link Time Optimization.
+codegen-units = 4
