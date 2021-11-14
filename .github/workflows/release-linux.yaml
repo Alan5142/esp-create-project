@@ -48,5 +48,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            esp-create-project-linux-86_64
+            esp-create-project-linux-x86_64
             esp-create-project-linux-aarch64
