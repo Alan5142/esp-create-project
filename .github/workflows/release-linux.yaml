@@ -15,15 +15,16 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install rustup aarch64
-        uses: actions/setup-rustup@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rustup-target: aarch64-unknown-linux-gnu
-          rustup-toolchain: stable
+          toolchain: stable
+          target: aarch64-unknown-linux-gnu
+
       - name: Install rustup x86_64
-        uses: actions/setup-rustup@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rustup-target: x86_64-unknown-linux-gnu
-          rustup-toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          toolchain: stable
 
       - name: Build aarch64
         uses: actions-rs/cargo@v1
@@ -31,11 +32,13 @@ jobs:
           use-cross: true
           command: build
           args: --target aarch64-unknown-linux-gnu --release
+
       - name: Build x86_64
         uses: actions-rs/cargo@v1
         with:
           command: build
           args: --target x86_64-unknown-linux-gnu --release
+
       - name: Rename files
         run: |
           mv target/x86_64-unknown-linux-gnu/release/esp-create-project esp-create-project-linux-x86_64
