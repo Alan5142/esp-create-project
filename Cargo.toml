@@ -1,6 +1,6 @@
 [package]
 name = "esp-create-project"
-version = "0.2.0"
+version = "0.2.2"
 authors = ["Alan Ramírez Herrera <alan5142@hotmail.com>"]
 edition = "2018"
 
