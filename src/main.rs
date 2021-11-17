@@ -83,11 +83,11 @@ impl From<usize> for ProgrammingLanguage {
 
 fn main() -> anyhow::Result<()> {
     // Get selected directory
-    let directory = env::args()
+    let project_name = env::args()
         .nth(1)
         .unwrap_or_else(|| "esp-new-project".into());
 
-    let dir = Path::new(&directory);
+    let dir = Path::new(&project_name);
     if dir.exists() && dir.read_dir().unwrap().next().is_some() && !prompt_directory_delete(dir)? {
         return Ok(());
     }
@@ -96,9 +96,9 @@ fn main() -> anyhow::Result<()> {
 
     let use_git = prompt_use_git()?;
 
-    if !directory.is_empty() && !Path::new(directory.as_str()).exists() {
+    if !project_name.is_empty() && !Path::new(project_name.as_str()).exists() {
         fs::create_dir_all(dir)
-            .context(format!("Failed to create directory \"{}\"", &directory))?;
+            .context(format!("Failed to create directory \"{}\"", &project_name))?;
     }
 
     // Create a temp file to download the template
@@ -119,28 +119,28 @@ fn main() -> anyhow::Result<()> {
 
     // Write the zip contents to the directory
     print!("📁 Writing files");
-    extract_zip(&directory, &mut zip, &prefix)?;
+    extract_zip(&project_name, &mut zip, &prefix)?;
 
-    replace_main_file(&directory, language_selection)?;
+    replace_main_file(&project_name, language_selection)?;
 
     let project_language = match language_selection {
         ProgrammingLanguage::C => "",
-        ProgrammingLanguage::Cpp11 => "set(CMAKE_CXX_VERSION 11)",
-        ProgrammingLanguage::Cpp14 => "set(CMAKE_CXX_VERSION 14)",
-        ProgrammingLanguage::Cpp17 => "set(CMAKE_CXX_VERSION 17)",
+        ProgrammingLanguage::Cpp11 => "set(CMAKE_CXX_STANDARD 11)",
+        ProgrammingLanguage::Cpp14 => "set(CMAKE_CXX_STANDARD 14)",
+        ProgrammingLanguage::Cpp17 => "set(CMAKE_CXX_STANDARD 17)",
         _ => {
             eprintln!("Invalid option");
             return Ok(());
         }
     };
-    set_cmake_programming_language(&directory, project_language)?;
+    set_cmake_options(&project_name, project_language, project_name.as_str())?;
 
     println!("\r✔ Files written  ");
 
     if use_git {
         print!("⚙️Initializing git repo");
         std::io::stdout().flush().unwrap();
-        initialize_git_repo(&directory)?;
+        initialize_git_repo(&project_name)?;
         println!("\r✔ Git repo initialized  ");
     }
 
@@ -214,7 +214,7 @@ fn prompt_use_git() -> anyhow::Result<bool> {
 ///
 /// # Errors
 /// If the file cannot be found or the file cannot be written
-fn set_cmake_programming_language(directory: &str, project_language: &str) -> anyhow::Result<()> {
+fn set_cmake_options(directory: &str, project_language: &str, project_name: &str) -> anyhow::Result<()> {
     let cmake_file = Path::new(&directory).join("CMakeLists.txt");
     let mut cmake_list_file = fs::read_to_string(&cmake_file)
         .context("Cannot find CMakeLists.txt")?
@@ -223,6 +223,9 @@ fn set_cmake_programming_language(directory: &str, project_language: &str) -> an
         .collect::<Vec<String>>();
 
     cmake_list_file[4] = project_language.into();
+    cmake_list_file[5] = "set(EXTRA_COMPONENT_DIRS components)".into();
+    cmake_list_file[6] = "include($ENV{IDF_PATH}/tools/cmake/project.cmake)".into();
+    cmake_list_file.push(format!("project({})", project_name));
 
     let new_cmake_file = cmake_list_file.join("\n");
 
