@@ -27,6 +27,9 @@ After invoking CLI, it'll prompt you about the options of the project, which com
 * Programming language (default is C)
 * Initialize a git repo? (you need git to create it)
 
+## Roadmap
+[Roadmap](https://github.com/Alan5142/esp-create-project/wiki/Roadmap)
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
